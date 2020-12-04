@@ -1,0 +1,10 @@
+/aggregatedOutput
+/build/arm64
+/build/armv7
+/build/armv7s
+/build/i386
+/build/x86_64
+/NDK
+/libcurl
+/buildOutput
+

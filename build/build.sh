@@ -1,0 +1,273 @@
+#!/bin/bash
+
+# Based on build scripts from the following:
+# https://github.com/aws/aws-sdk-cpp/issues/340 
+# https://github.com/mologie/libtomcrypt-ios
+# http://stackoverflow.com/a/27161949/5148626
+
+# ------------------------------
+#           README FIRST
+# ------------------------------
+#           DEPENDENCY
+# - Need to build libcurl for iOS
+# -- see project: https://github.com/gcesarmza/curl-android-ios
+# -- Update to latest release of curl if necessary (run git clone https://github.com/curl/curl.git from inside this project)
+# -- Before running the build script located in "curl-compile-scripts/build_iOS.h",
+#    - Go to line containing .configure command
+#      - add option "--without-zlib" to .configure command,
+#      - make sure it has option "--with-darwinssl",
+#      - and then run the build script
+#
+# ------------------------------
+# Create DIR structure as follows
+# ------------------------------
+#
+#  Workspace_dir    // name this whatever you like
+#  |
+#   -- aws-sdk-cpp  // Source dir
+#  |
+#   -- build
+#  |   |
+#  |    -- build.sh // (this script)
+#  |
+#  |-- buildOutput      // Automatically created. Will contain output
+#  |
+#  |-- aggregatedOutput // Automatically created. Will contain aggregated output (if last line is un-commented)
+#  |
+#   -- libcurl
+#      |
+#       -- lib/libcurl.a      // Note: This should contain a fatlib to support building arm64, armv7, armv7s
+#      |
+#       -- include/..         // libcurl headers
+#
+# ------------------------------
+# Usage: Once libcurl is built/available place it in "libcurl" directory as shown above. Then:
+#        1. Update following parameters in the script below as required:
+#           - WORKSPACE - path to "Workspace_dir" mentioned above
+#           - SDK_VERSION - Currently Set to 10.3
+#           - MIN_VERSION - Currently Set to 10.0
+#           - AWS cmake arguments as necessary in build_AWSRelease_bitcode() function.
+#             Note: To disable bitcode, remove "-fembed-bitcode" from CMAKE_CXX_FLAGS
+#
+#           - If you want to aggregate build outputs into a fat lib, see function aggregate_libs()
+#               - Add the necessary libraries in the components array
+#               - uncomment last line: aggregate_libs "${WORKSPACE}/aggregatedOutput"
+#
+#        2. Place the build script in "Workspace_dir/build"
+#
+#        3. Run the following in terminal:
+#               cd Workspace_dir/build
+#               ./build.sh
+#
+# Output should be in Workspace_dir/buildOutput, if everything went well
+# Aggregated lib should be in Workspace_dir/aggregatedOutput, if everything went well
+# ------------------------------
+
+set -x
+
+# SDK Version
+SDK_VERSION="14.0"
+MIN_VERSION="10.0"
+
+# Setup paths
+# echo current directory is $(pwd)
+WORKSPACE=$(pwd)/../
+# ls ${WORKSPACE}
+
+
+# XCode paths
+DEVELOPER="/Applications/Xcode 12.0.app/Contents/Developer"
+IPHONEOS_PLATFORM="${DEVELOPER}/Platforms/iPhoneOS.platform"
+IPHONEOS_SDK="${IPHONEOS_PLATFORM}/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk"
+
+IPHONESIMULATOR_PLATFORM="${DEVELOPER}/Platforms/iPhoneSimulator.platform"
+IPHONESIMULATOR_SDK="${IPHONESIMULATOR_PLATFORM}/Developer/SDKs/iPhoneSimulator${SDK_VERSION}.sdk"
+
+# Make sure things actually exist
+if [ ! -d "$IPHONEOS_PLATFORM" ]; then
+  echo "Cannot find $IPHONEOS_PLATFORM"
+  exit 1
+fi
+
+if [ ! -d "$IPHONEOS_SDK" ]; then
+  echo "Cannot find $IPHONEOS_SDK"
+  exit 1
+fi
+
+
+if [ ! -d "$IPHONESIMULATOR_PLATFORM" ]; then
+  echo "Cannot find $IPHONESIMULATOR_PLATFORM"
+  exit 1
+fi
+
+if [ ! -d "$IPHONESIMULATOR_SDK" ]; then
+  echo "Cannot find $IPHONESIMULATOR_SDK"
+  exit 1
+fi
+
+
+pwd=`pwd`
+
+# ----------------------------------
+# To build arm64, armv7, armv7s
+# ----------------------------------
+build_AWSRelease_bitcode()
+{
+	export ARCH=$1
+
+    # Build intermediates dir
+    mkdir -p $ARCH
+    cd $ARCH
+
+    # Cleanup
+    rm -r ./*
+
+	export SDK=$2
+
+    export CC="$(xcrun -sdk iphoneos -find clang)"
+    export CPP="$CC -E"
+    export CFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
+    export AR=$(xcrun -sdk iphoneos -find ar)
+    export RANLIB=$(xcrun -sdk iphoneos -find ranlib)
+    export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
+    export LDFLAGS="-arch ${ARCH} -isysroot $SDK"
+
+    BUILD_OUTPUT="${WORKSPACE}/buildOutput/${ARCH}"
+    mkdir -p $BUILD_OUTPUT
+
+    echo $CMAKE_CXX_FLAGS
+
+    cmake -Wno-dev \
+        -DCMAKE_OSX_SYSROOT="$IPHONEOS_SDK" \
+        -DCMAKE_OSX_ARCHITECTURES=$ARCH \
+        -DCMAKE_SYSTEM_NAME="Darwin" \
+		-DENABLE_TESTING=0 \
+		-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+        -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
+        -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
+        -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCUSTOM_MEMORY_MANAGEMENT=0 \
+        -DCMAKE_BUILD_TYPE="Release" \
+        -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
+        -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
+        $WORKSPACE/aws-sdk-cpp
+    make -j 8
+    make install
+
+    # Go back
+    cd ..
+}
+
+
+# ----------------------------------
+# To build i386, x86_64 (fails currently)
+# ----------------------------------
+build_AWSRelease_Simulator_bitcode()
+{
+    export ARCH=$1
+
+    # Build intermediates dir
+    mkdir -p $ARCH
+    cd $ARCH
+
+    # Cleanup
+    rm -r ./*
+
+    export SDK=$2
+
+    export CC="$(xcrun -sdk iphonesimulator -find clang)"
+    export CPP="$CC -E"
+    export CFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
+    export AR=$(xcrun -sdk iphonesimulator -find ar)
+    export RANLIB=$(xcrun -sdk iphonesimulator -find ranlib)
+    export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
+    export LDFLAGS="-arch ${ARCH} -isysroot $SDK"
+
+    BUILD_OUTPUT="${WORKSPACE}/buildOutput/${ARCH}"
+    mkdir -p $BUILD_OUTPUT
+
+    echo $CMAKE_CXX_FLAGS
+
+    cmake -Wno-dev \
+    -DCMAKE_OSX_SYSROOT=$IPHONESIMULATOR_SDK \
+    -DCMAKE_OSX_ARCHITECTURES=$ARCH \
+    -DCMAKE_SYSTEM_NAME="Darwin" \
+	-DENABLE_TESTING=0 \
+	-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
+    -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
+    -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCUSTOM_MEMORY_MANAGEMENT=0 \
+    -DCMAKE_BUILD_TYPE="Release" \
+    -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
+    -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
+    $WORKSPACE/aws-sdk-cpp
+    make -j 8
+    make install
+
+    # Go back
+    cd ..
+}
+
+# ---------------------------------------------------
+# Function to aggregate build outputs into a fat lib
+# ---------------------------------------------------
+aggregate_libs() {
+    set +x
+    AGG_OUTPUT_DIR=$1
+    # Aggregate library and include files
+    mkdir -p ${AGG_OUTPUT_DIR}/include
+    mkdir -p ${AGG_OUTPUT_DIR}/lib
+
+    cp -r ${WORKSPACE}/buildOutput/arm64/include/* ${AGG_OUTPUT_DIR}/include/
+
+    ## declare an array variable with required aws components
+    ## This is an example. Change as required
+    declare -a components=( "access-management"
+                            "cognito-identity"
+                            "cognito-sync"
+							"core"
+                            "iam"
+                            "kinesis"
+                            "lambda"
+                            )
+
+    ## now loop through the above array
+    for component in "${components[@]}"
+    do
+        LIBNAME="libaws-cpp-sdk-${component}.a"
+        echo "--------- Aggregating $LIBNAME ---------"
+        xcrun -sdk iphoneos lipo \
+        "${WORKSPACE}/buildOutput/arm64/lib/${LIBNAME}" \
+        "${WORKSPACE}/buildOutput/armv7/lib/${LIBNAME}" \
+        "${WORKSPACE}/buildOutput/armv7s/lib/${LIBNAME}" \
+        "${WORKSPACE}/buildOutput/i386/lib/${LIBNAME}" \
+        "${WORKSPACE}/buildOutput/x86_64/lib/${LIBNAME}" \
+        -create -output ${AGG_OUTPUT_DIR}/lib/${LIBNAME}
+
+        # verify arch
+        echo "- Running lipo info for $LIBNAME:"
+        lipo -info ${AGG_OUTPUT_DIR}/lib/${LIBNAME}
+        echo "--------------------------------------------------"
+    done
+
+    echo "--------------------------------------------------"
+    echo "Aggregated output location: ${AGG_OUTPUT_DIR}"
+    echo "--------------------------------------------------"
+}
+
+## Build release configuration
+#build_AWSRelease_bitcode "arm64" "${IPHONEOS_SDK}"
+## Comment the following if not required
+#build_AWSRelease_bitcode "armv7" "${IPHONEOS_SDK}"
+#build_AWSRelease_bitcode "armv7s" "${IPHONEOS_SDK}"
+
+## Note: The following do not work currently
+#build_AWSRelease_Simulator_bitcode "i386" "${IPHONESIMULATOR_SDK}"
+#build_AWSRelease_Simulator_bitcode "x86_64" "${IPHONESIMULATOR_SDK}"
+
+## Aggregate into a fat lib. Argument provided here is the output directory
+## (OPTIONAL) Uncomment below to create a fat lib
+aggregate_libs "${WORKSPACE}/aggregatedOutput"
