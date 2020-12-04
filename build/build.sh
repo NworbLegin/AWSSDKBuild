@@ -259,14 +259,14 @@ aggregate_libs() {
 }
 
 ## Build release configuration
-#build_AWSRelease_bitcode "arm64" "${IPHONEOS_SDK}"
+build_AWSRelease_bitcode "arm64" "${IPHONEOS_SDK}"
 ## Comment the following if not required
-#build_AWSRelease_bitcode "armv7" "${IPHONEOS_SDK}"
-#build_AWSRelease_bitcode "armv7s" "${IPHONEOS_SDK}"
+build_AWSRelease_bitcode "armv7" "${IPHONEOS_SDK}"
+build_AWSRelease_bitcode "armv7s" "${IPHONEOS_SDK}"
 
 ## Note: The following do not work currently
-#build_AWSRelease_Simulator_bitcode "i386" "${IPHONESIMULATOR_SDK}"
-#build_AWSRelease_Simulator_bitcode "x86_64" "${IPHONESIMULATOR_SDK}"
+build_AWSRelease_Simulator_bitcode "i386" "${IPHONESIMULATOR_SDK}"
+build_AWSRelease_Simulator_bitcode "x86_64" "${IPHONESIMULATOR_SDK}"
 
 ## Aggregate into a fat lib. Argument provided here is the output directory
 ## (OPTIONAL) Uncomment below to create a fat lib
