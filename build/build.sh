@@ -66,7 +66,7 @@
 set -x
 
 # SDK Version
-SDK_VERSION="14.0"
+SDK_VERSION="13.6"
 MIN_VERSION="10.0"
 
 # Setup paths
@@ -76,7 +76,7 @@ WORKSPACE=$(pwd)/../
 
 
 # XCode paths
-DEVELOPER="/Applications/Xcode 12.0.app/Contents/Developer"
+DEVELOPER="/Applications/Xcode.app/Contents/Developer"
 IPHONEOS_PLATFORM="${DEVELOPER}/Platforms/iPhoneOS.platform"
 IPHONEOS_SDK="${IPHONEOS_PLATFORM}/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk"
 
