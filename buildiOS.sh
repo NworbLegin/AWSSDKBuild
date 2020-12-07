@@ -71,12 +71,12 @@ MIN_VERSION="10.0"
 
 # Setup paths
 # echo current directory is $(pwd)
-WORKSPACE=$(pwd)/../
+WORKSPACE=$(pwd)
 # ls ${WORKSPACE}
 
 
 # XCode paths
-DEVELOPER="/Applications/Xcode 12.0.app/Contents/Developer"
+DEVELOPER="/Applications/Xcode.app/Contents/Developer"
 IPHONEOS_PLATFORM="${DEVELOPER}/Platforms/iPhoneOS.platform"
 IPHONEOS_SDK="${IPHONEOS_PLATFORM}/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk"
 
@@ -114,10 +114,12 @@ pwd=`pwd`
 build_AWSRelease_bitcode()
 {
 	export ARCH=$1
+	export DBGREL="Release"
+	export BUILD_FOLDER=build/iOS-$ARCH-$DBGREL
 
     # Build intermediates dir
-    mkdir -p $ARCH
-    cd $ARCH
+    mkdir -p $BUILD_FOLDER
+    cd $BUILD_FOLDER
 
     # Cleanup
     rm -r ./*
@@ -132,7 +134,7 @@ build_AWSRelease_bitcode()
     export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
     export LDFLAGS="-arch ${ARCH} -isysroot $SDK"
 
-    BUILD_OUTPUT="${WORKSPACE}/buildOutput/${ARCH}"
+    BUILD_OUTPUT="${WORKSPACE}/output/iOS/${ARCH}/${DBGREL}"
     mkdir -p $BUILD_OUTPUT
 
     echo $CMAKE_CXX_FLAGS
@@ -148,7 +150,7 @@ build_AWSRelease_bitcode()
         -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
         -DBUILD_SHARED_LIBS=OFF \
         -DCUSTOM_MEMORY_MANAGEMENT=0 \
-        -DCMAKE_BUILD_TYPE="Release" \
+        -DCMAKE_BUILD_TYPE=$DBGREL \
         -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
         -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
         $WORKSPACE/aws-sdk-cpp
@@ -157,6 +159,7 @@ build_AWSRelease_bitcode()
 
     # Go back
     cd ..
+	cd ..
 }
 
 
@@ -166,10 +169,12 @@ build_AWSRelease_bitcode()
 build_AWSRelease_Simulator_bitcode()
 {
     export ARCH=$1
+	export DBGREL="Release"
+	export BUILD_FOLDER=build/iOS-$ARCH-$DBGREL
 
     # Build intermediates dir
-    mkdir -p $ARCH
-    cd $ARCH
+    mkdir -p $BUILD_FOLDER
+    cd $BUILD_FOLDER
 
     # Cleanup
     rm -r ./*
@@ -184,7 +189,7 @@ build_AWSRelease_Simulator_bitcode()
     export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
     export LDFLAGS="-arch ${ARCH} -isysroot $SDK"
 
-    BUILD_OUTPUT="${WORKSPACE}/buildOutput/${ARCH}"
+    BUILD_OUTPUT="${WORKSPACE}/output/iOS/${ARCH}/${DBGREL}"
     mkdir -p $BUILD_OUTPUT
 
     echo $CMAKE_CXX_FLAGS
@@ -200,7 +205,7 @@ build_AWSRelease_Simulator_bitcode()
     -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
     -DBUILD_SHARED_LIBS=OFF \
     -DCUSTOM_MEMORY_MANAGEMENT=0 \
-    -DCMAKE_BUILD_TYPE="Release" \
+    -DCMAKE_BUILD_TYPE=$DBGREL \
     -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
     -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
     $WORKSPACE/aws-sdk-cpp
@@ -209,6 +214,7 @@ build_AWSRelease_Simulator_bitcode()
 
     # Go back
     cd ..
+	cd ..
 }
 
 # ---------------------------------------------------
@@ -217,11 +223,13 @@ build_AWSRelease_Simulator_bitcode()
 aggregate_libs() {
     set +x
     AGG_OUTPUT_DIR=$1
+	export DBGREL="Release"
+
     # Aggregate library and include files
     mkdir -p ${AGG_OUTPUT_DIR}/include
     mkdir -p ${AGG_OUTPUT_DIR}/lib
 
-    cp -r ${WORKSPACE}/buildOutput/arm64/include/* ${AGG_OUTPUT_DIR}/include/
+    cp -r ${WORKSPACE}/output/iOS/arm64/${DBGREL}/include/* ${AGG_OUTPUT_DIR}/include/
 
     ## declare an array variable with required aws components
     ## This is an example. Change as required
@@ -240,11 +248,11 @@ aggregate_libs() {
         LIBNAME="libaws-cpp-sdk-${component}.a"
         echo "--------- Aggregating $LIBNAME ---------"
         xcrun -sdk iphoneos lipo \
-        "${WORKSPACE}/buildOutput/arm64/lib/${LIBNAME}" \
-        "${WORKSPACE}/buildOutput/armv7/lib/${LIBNAME}" \
-        "${WORKSPACE}/buildOutput/armv7s/lib/${LIBNAME}" \
-        "${WORKSPACE}/buildOutput/i386/lib/${LIBNAME}" \
-        "${WORKSPACE}/buildOutput/x86_64/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/arm64/${DBGREL}/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/armv7/${DBGREL}/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/armv7s/${DBGREL}/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/i386/${DBGREL}/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/x86_64/${DBGREL}/lib/${LIBNAME}" \
         -create -output ${AGG_OUTPUT_DIR}/lib/${LIBNAME}
 
         # verify arch
@@ -270,4 +278,4 @@ build_AWSRelease_Simulator_bitcode "x86_64" "${IPHONESIMULATOR_SDK}"
 
 ## Aggregate into a fat lib. Argument provided here is the output directory
 ## (OPTIONAL) Uncomment below to create a fat lib
-aggregate_libs "${WORKSPACE}/aggregatedOutput"
+aggregate_libs "${WORKSPACE}/output/iOS/fatlib"
