@@ -66,7 +66,7 @@
 set -x
 
 # SDK Version
-SDK_VERSION="14.0"
+SDK_VERSION="13.6"
 MIN_VERSION="10.0"
 
 # Setup paths
