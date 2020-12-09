@@ -144,7 +144,7 @@ build_AWSRelease_bitcode()
         -DCMAKE_OSX_ARCHITECTURES=$ARCH \
         -DCMAKE_SYSTEM_NAME="Darwin" \
 		-DENABLE_TESTING=0 \
-		-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+		-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda;pinpoint" \
         -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
         -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
         -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
@@ -199,7 +199,7 @@ build_AWSRelease_Simulator_bitcode()
     -DCMAKE_OSX_ARCHITECTURES=$ARCH \
     -DCMAKE_SYSTEM_NAME="Darwin" \
 	-DENABLE_TESTING=0 \
-	-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+	-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda;pinpoint" \
     -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
     -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
     -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
@@ -240,6 +240,7 @@ aggregate_libs() {
                             "iam"
                             "kinesis"
                             "lambda"
+							"pinpoint"
                             )
 
     ## now loop through the above array
