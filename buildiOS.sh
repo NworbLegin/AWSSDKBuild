@@ -76,7 +76,7 @@ WORKSPACE=$(pwd)
 
 
 # XCode paths
-DEVELOPER="/Applications/Xcode.app/Contents/Developer"
+DEVELOPER="/Applications/Xcode_11.6.app/Contents/Developer"
 IPHONEOS_PLATFORM="${DEVELOPER}/Platforms/iPhoneOS.platform"
 IPHONEOS_SDK="${IPHONEOS_PLATFORM}/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk"
 
@@ -144,7 +144,7 @@ build_AWSRelease_bitcode()
         -DCMAKE_OSX_ARCHITECTURES=$ARCH \
         -DCMAKE_SYSTEM_NAME="Darwin" \
 		-DENABLE_TESTING=0 \
-		-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+		-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda;s3;apigateway;identity-management" \
         -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
         -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
         -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
@@ -186,7 +186,7 @@ build_AWSRelease_Simulator_bitcode()
     export CFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
     export AR=$(xcrun -sdk iphonesimulator -find ar)
     export RANLIB=$(xcrun -sdk iphonesimulator -find ranlib)
-    export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION"
+    export CPPFLAGS="-arch ${ARCH} -isysroot $SDK -miphoneos-version-min=$MIN_VERSION -Wno-error"
     export LDFLAGS="-arch ${ARCH} -isysroot $SDK"
 
     BUILD_OUTPUT="${WORKSPACE}/output/iOS/${ARCH}/${DBGREL}"
@@ -199,7 +199,7 @@ build_AWSRelease_Simulator_bitcode()
     -DCMAKE_OSX_ARCHITECTURES=$ARCH \
     -DCMAKE_SYSTEM_NAME="Darwin" \
 	-DENABLE_TESTING=0 \
-	-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda" \
+	-DBUILD_ONLY="kinesis;cognito-identity;cognito-sync;lambda;s3;apigateway;identity-management" \
     -DCMAKE_SHARED_LINKER_FLAGS="-framework Foundation -lz -framework Security" \
     -DCMAKE_EXE_LINKER_FLAGS="-framework Foundation -framework Security" \
     -DCMAKE_PREFIX_PATH="$WORKSPACE/libcurl/" \
