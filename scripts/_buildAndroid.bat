@@ -16,6 +16,11 @@ set externalOutputPath=%outputpath:/=\%\%buildType%\%abi%\external
 mkdir %externalOutputPath%
 xcopy /e /y /q external %externalOutputPath% 
 
+xcopy /e /t /q android-%abi%-%buildType%/.deps/install/lib/*.a %outputPath%/%buildType%/%abi%/lib
+
+rem ** Copy the c-libs as well
+
+
 cd ..
 cd ..
 
