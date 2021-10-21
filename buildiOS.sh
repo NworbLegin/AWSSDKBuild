@@ -76,7 +76,7 @@ WORKSPACE=$(pwd)
 
 
 # XCode paths
-DEVELOPER="/Applications/Xcode.app/Contents/Developer"
+DEVELOPER="/Applications/Xcode_12.5.app/Contents/Developer"
 IPHONEOS_PLATFORM="${DEVELOPER}/Platforms/iPhoneOS.platform"
 IPHONEOS_SDK="${IPHONEOS_PLATFORM}/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk"
 
