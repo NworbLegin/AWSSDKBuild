@@ -153,6 +153,18 @@ build_AWSRelease_bitcode()
         -DCMAKE_BUILD_TYPE=$DBGREL \
         -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
         -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
+		-DSTATIC_LINKING=1 \
+		-DTARGET_ARCH=APPLE \
+		-DCMAKE_CXX_FLAGS=-O3 \
+		-DCPP_STANDARD=14 \
+		-DENABLE_CURL_CLIENT=Yes \
+		-DCURL_INCLUDE_DIR=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/curl-ios-$ARCH/include \
+		-DCURL_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/curl-ios-$ARCH/lib/libcurl.a \
+		-DCMAKE_IOS_DEPLOYMENT_TARGET=“12” \
+		-DENABLE_OPENSSL_ENCRYPTION=Yes \
+		-DOPENSSL_CRYPTO_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/lib/libcrypto.a \
+		-DOPENSSL_SSL_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/lib/libssl.a \
+		-DOPENSSL_INCLUDE_DIR=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/include \
         $WORKSPACE/aws-sdk-cpp
     make -j 8
     make install
@@ -265,6 +277,18 @@ build_AWSRelease_Simulator_bitcode()
     -DCMAKE_BUILD_TYPE=$DBGREL \
     -DCMAKE_INSTALL_PREFIX="$BUILD_OUTPUT" \
     -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -miphoneos-version-min=$MIN_VERSION" \
+	-DSTATIC_LINKING=1 \
+	-DTARGET_ARCH=APPLE \
+	-DCMAKE_CXX_FLAGS=-O3 \
+	-DCPP_STANDARD=14 \
+	-DENABLE_CURL_CLIENT=Yes \
+	-DCURL_INCLUDE_DIR=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/curl-ios-$ARCH/include \
+	-DCURL_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/curl-ios-$ARCH/lib/libcurl.a \
+	-DCMAKE_IOS_DEPLOYMENT_TARGET=“12” \
+	-DENABLE_OPENSSL_ENCRYPTION=Yes \
+	-DOPENSSL_CRYPTO_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/lib/libcrypto.a \
+	-DOPENSSL_SSL_LIBRARY=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/lib/libssl.a \
+	-DOPENSSL_INCLUDE_DIR=${WORKSPACE}/openssl_curl_for_ios_android.20170105/output/ios/openssl-ios-$ARCH/include \
     $WORKSPACE/aws-sdk-cpp
     make -j 8
     make install
@@ -422,6 +446,7 @@ aggregate_debug_libs() {
         echo "--------- Aggregating $LIBNAME ---------"
         xcrun -sdk iphoneos lipo \
         "${WORKSPACE}/output/iOS/arm64/${DBGREL}/lib/${LIBNAME}" \
+        "${WORKSPACE}/output/iOS/armv7/${DBGREL}/lib/${LIBNAME}" \
         "${WORKSPACE}/output/iOS/x86_64/${DBGREL}/lib/${LIBNAME}" \
         -create -output ${AGG_OUTPUT_DIR}/lib/${LIBNAME}
 
