@@ -1,3 +1,20 @@
+echo "-- Update submodules --"
+git submodule update --init --recursive
+
+echo "-- Set up the NDK --"
+mkdir NDK
+cd NDK
+mkdir Windows
+cd Windows
+wget https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip --no-check-certificate
+tar.exe -x -f android-ndk-r21e-windows-x86_64.zip
+del android-ndk-r21e-windows-x86_64.zip
+cd ..
+cd ..
+
+
+echo "-- Build AWSSDKCPP for Android --"
+
 mkdir output
 set curDir=%CD:\=/%
 set outputPath=%curDir%/output/Android

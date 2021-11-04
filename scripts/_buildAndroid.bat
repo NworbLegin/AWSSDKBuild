@@ -18,7 +18,7 @@ mkdir %externalOutputPath%
 xcopy /e /y /q external %externalOutputPath% 
 
 xcopy /e /y /q .deps\install\lib\*.a %outputPath:/=\%\%buildType%\%abi%\lib
-mkdir %outputPath:/=\%/%buildType%/%abi%/install
+mkdir %outputPath:/=\%\%buildType%\%abi%\install
 xcopy /e /y /q .deps\install\include %outputPath:/=\%\%buildType%\%abi%\include
 
 
