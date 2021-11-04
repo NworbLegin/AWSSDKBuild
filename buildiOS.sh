@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# Update submodules
+echo "-- Updating submodules --"
+git submodule update --init --recursive
+
+# Dependencies
+echo "-- Making ssl-curl folder --"
+mkdir openssl_curl_for_ios_android.20170105
+
+echo "-- Moving into the new folder --"
+cd openssl_curl_for_ios_android.20170105
+
+echo "-- Downloading a pre-built version of the ssl-curl lib --"
+curl -L -o file.zip https://github.com/leenjewel/openssl_for_ios_and_android/releases/download/20170105/openssl_curl_for_ios_android.20170105.zip
+
+echo "-- Unzipping the downloaded zip file --"
+tar -xf file.zip
+
+echo "-- Moving back to previous folder --"
+cd ..
+
+# AWSSDKCPP build
+
 # Based on build scripts from the following:
 # https://github.com/aws/aws-sdk-cpp/issues/340 
 # https://github.com/mologie/libtomcrypt-ios
@@ -478,3 +500,23 @@ build_AWSRelease_Simulator_bitcode "x86_64" "${IPHONESIMULATOR_SDK}"
 ## Aggregate into a fat lib. Argument provided here is the output directory
 aggregate_release_libs "${WORKSPACE}/output/iOS/fatlib/release"
 #aggregate_debug_libs "${WORKSPACE}/output/iOS/fatlib/debug"
+
+echo "-- Initial AWSSDKCPP build complete --"
+
+echo "-- zipping output --"
+mkdir zipOutput
+rm zipOutput/AWSSDKCPP.zip
+mv output AWSSDKCPP
+zip -r zipOutput/AWSSDKCPP.zip AWSSDKCPP
+mv AWSSDKCPP output
+echo "-- create openssl curl zip file --"
+rm zipOutput/libcurl.zip
+cd openssl_curl_for_ios_android.20170105
+mv output libcurl
+zip -r ../zipOutput/libcurl.zip libcurl
+mv libcurl output
+cd ..
+echo "-- done --"
+
+
+
